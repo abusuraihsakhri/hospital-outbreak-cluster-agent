@@ -3,6 +3,7 @@ Automated Pytest Test Suite for Hospital Outbreak Cluster Agent.
 Domain: Antimicrobial Stewardship & Microbiology
 Standard: CLSI M100 / EUCAST / CDC NHSN Guidelines
 """
+import math
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -23,6 +24,23 @@ def test_phi_guard_enforcement():
     PHIGuard.assert_no_phi("Analytical assay specimen KEY-001 optimal")
 
 
+def test_phi_guard_redaction():
+    redacted = PHIGuard.redact_phi("Contact patient at 555-123-4567 for follow-up")
+    assert "555-123-4567" not in redacted
+    assert "[REDACTED_IDENTIFIER]" in redacted
+
+
+def test_phi_guard_audit_logging():
+    """PHI violations should be recorded in the audit trail."""
+    trail_before = len(AuditLogger.get_trail())
+    try:
+        PHIGuard.assert_no_phi("SSN 123-45-6789 detected")
+    except SecurityException:
+        pass
+    trail_after = len(AuditLogger.get_trail())
+    assert trail_after > trail_before
+
+
 def test_specialized_workers():
     # Worker 1: QC Invariant
     p1 = SystemTaskPayload(task_id="T1", target_identifier="KEY-01", primary_metric=35.0)
@@ -40,6 +58,23 @@ def test_specialized_workers():
     p3 = SystemTaskPayload(task_id="T3", target_identifier="KEY-03", primary_metric=10.0, status_descriptor="DISCORDANT_ANOMALY")
     alerts3 = ProtocolConformanceWorker.evaluate(p3)
     assert len(alerts3) == 1
+
+
+def test_nan_infinity_validation():
+    """Workers should flag NaN and Infinity metric values."""
+    # NaN primary metric
+    p_nan = SystemTaskPayload(task_id="T-NAN", target_identifier="KEY-NAN", primary_metric=float("nan"))
+    alerts_nan = InvariantQCWorker.evaluate(p_nan)
+    assert len(alerts_nan) == 1
+    assert alerts_nan[0].origin_worker == "InputValidation"
+    assert alerts_nan[0].urgency == UrgencyLevel.ELEVATED
+
+    # Infinity secondary metric - triggers both InputValidation and SafetyEscalationWorker
+    p_inf = SystemTaskPayload(task_id="T-INF", target_identifier="KEY-INF", primary_metric=10.0, secondary_metric=float("inf"))
+    alerts_inf = SafetyEscalationWorker.evaluate(p_inf)
+    assert len(alerts_inf) == 2
+    assert any(a.origin_worker == "InputValidation" for a in alerts_inf)
+    assert any(a.origin_worker == "SafetyEscalationWorker" for a in alerts_inf)
 
 
 def test_supervisor_consensus_and_audit():
@@ -63,3 +98,9 @@ def test_supervisor_consensus_and_audit():
     assert main(["audit", "--task-id", "CLI-TEST-01"]) == 0
     assert main(["chat", "Explain", "specifications"]) == 0
     assert main(["verify-audit"]) == 0
+
+
+def test_batch_missing_file_returns_error():
+    """CLI batch command should return non-zero exit code for missing files."""
+    result = main(["batch", "-i", "nonexistent_file_xyz.csv"])
+    assert result == 1

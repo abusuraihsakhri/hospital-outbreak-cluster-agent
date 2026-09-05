@@ -3,9 +3,25 @@ Specialized Domain Worker Agents for Hospital Outbreak Cluster Agent.
 Domain: Antimicrobial Stewardship & Microbiology
 Standard: CLSI M100 / EUCAST / CDC NHSN Guidelines
 """
+import math
 import uuid
-from typing import Dict, Any, List, Optional
-from .models import SystemTaskPayload, AgentAlert, UrgencyLevel, SystemIntegrityStatus
+from typing import List
+from .models import SystemTaskPayload, AgentAlert, UrgencyLevel
+
+
+def _validate_numeric(value: float, field_name: str) -> List[AgentAlert]:
+    """Validate that a numeric metric is finite and within acceptable bounds."""
+    alerts = []
+    if math.isnan(value) or math.isinf(value):
+        alerts.append(AgentAlert(
+            alert_id=f"QC-{uuid.uuid4().hex[:6]}",
+            origin_worker="InputValidation",
+            urgency=UrgencyLevel.ELEVATED,
+            summary=f"Invalid numeric value in {field_name}",
+            technical_details=f"Field '{field_name}' contains non-finite value ({value}). All metrics must be finite real numbers.",
+            actionable_remediation="Verify input data source and ensure measurements are properly recorded as finite numeric values.",
+        ))
+    return alerts
 
 
 class InvariantQCWorker:
@@ -14,6 +30,7 @@ class InvariantQCWorker:
     @classmethod
     def evaluate(cls, payload: SystemTaskPayload) -> List[AgentAlert]:
         alerts = []
+        alerts.extend(_validate_numeric(payload.primary_metric, "primary_metric"))
         if payload.primary_metric > 25.0:
             alerts.append(AgentAlert(
                 alert_id=f"QC-{uuid.uuid4().hex[:6]}",
@@ -32,6 +49,7 @@ class SafetyEscalationWorker:
     @classmethod
     def evaluate(cls, payload: SystemTaskPayload) -> List[AgentAlert]:
         alerts = []
+        alerts.extend(_validate_numeric(payload.secondary_metric, "secondary_metric"))
         if payload.is_critical_flag or payload.secondary_metric > 12.0:
             alerts.append(AgentAlert(
                 alert_id=f"SAFE-{uuid.uuid4().hex[:6]}",

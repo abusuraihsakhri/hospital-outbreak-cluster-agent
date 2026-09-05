@@ -10,7 +10,6 @@ import hmac
 import hashlib
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
-from pydantic import BaseModel, Field
 
 PHI_PATTERNS = [
     re.compile(r"\b(?:MRN|mrn)[:#\s-]*\d{4,10}\b", re.IGNORECASE),
@@ -33,18 +32,28 @@ class ResourceLimitExceededException(Exception):
     pass
 
 
-def assert_no_phi(text: str) -> None:
+def assert_no_phi(text: str, audit: bool = True) -> None:
     if not text:
         return
     for pattern in PHI_PATTERNS:
         if pattern.search(str(text)):
+            if audit:
+                try:
+                    GLOBAL_AUDIT.log(
+                        actor="PHIGuard",
+                        actor_tier="security",
+                        event_type="PHI_VIOLATION_BLOCKED",
+                        details={"pattern": pattern.pattern, "action": "BLOCKED"},
+                    )
+                except Exception:
+                    pass  # Never let audit logging failure block security enforcement
             raise SecurityException(f"PHI Outbound Guard Violation: Sensitive identifier detected with pattern {pattern.pattern}")
 
 
 class PHIGuard:
     @staticmethod
-    def assert_no_phi(text: str) -> None:
-        assert_no_phi(text)
+    def assert_no_phi(text: str, audit: bool = True) -> None:
+        assert_no_phi(text, audit=audit)
 
     @staticmethod
     def redact_phi(text: str) -> str:
@@ -57,7 +66,17 @@ class PHIGuard:
 class AuditTrail:
     """Cryptographic Tamper-Evident HMAC-SHA256 Audit Trail."""
     def __init__(self, secret_key: Optional[str] = None):
-        self.secret_key = (secret_key or os.getenv("AUDIT_SECRET_KEY", "hospital-outbreak-cluster-agent-master-audit-key-2026")).encode("utf-8")
+        resolved_key = secret_key or os.getenv("AUDIT_SECRET_KEY")
+        if not resolved_key:
+            import warnings
+            warnings.warn(
+                "AUDIT_SECRET_KEY not set. Using development-only default. "
+                "Set AUDIT_SECRET_KEY env var in production.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            resolved_key = "DEV-ONLY-KEY-CHANGE-IN-PRODUCTION-" + os.urandom(16).hex()
+        self.secret_key = resolved_key.encode("utf-8") if isinstance(resolved_key, str) else resolved_key
         self.logs: List[Dict[str, Any]] = []
 
     def log(self, actor: str, actor_tier: str, event_type: str, details: Dict[str, Any]) -> Dict[str, Any]:
