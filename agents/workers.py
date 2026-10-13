@@ -31,6 +31,8 @@ class InvariantQCWorker:
     def evaluate(cls, payload: SystemTaskPayload) -> List[AgentAlert]:
         alerts = []
         alerts.extend(_validate_numeric(payload.primary_metric, "primary_metric"))
+        if alerts:
+            return alerts
         if payload.primary_metric > 25.0:
             alerts.append(AgentAlert(
                 alert_id=f"QC-{uuid.uuid4().hex[:6]}",
@@ -50,6 +52,8 @@ class SafetyEscalationWorker:
     def evaluate(cls, payload: SystemTaskPayload) -> List[AgentAlert]:
         alerts = []
         alerts.extend(_validate_numeric(payload.secondary_metric, "secondary_metric"))
+        if alerts:
+            return alerts
         if payload.is_critical_flag or payload.secondary_metric > 12.0:
             alerts.append(AgentAlert(
                 alert_id=f"SAFE-{uuid.uuid4().hex[:6]}",
