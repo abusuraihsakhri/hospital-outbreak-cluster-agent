@@ -14,7 +14,7 @@ supervisor = SystemSupervisor(model_provider="mock")
 
 app = FastAPI(
     title="Hospital Outbreak Cluster Agent API",
-    description="Enterprise Distributed Component Platform (Antimicrobial Stewardship & Microbiology)",
+    description="Synthetic-record demonstration of three configurable rule workers",
     version="3.0.0-ENTERPRISE",
 )
 
@@ -34,7 +34,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "hospital-outbreak-cluster-agent", "domain": "Antimicrobial Stewardship & Microbiology", "standard": "CLSI M100 / EUCAST / CDC NHSN Guidelines", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "HEALTHY", "service": "hospital-outbreak-cluster-agent", "domain": "Antimicrobial Stewardship & Microbiology", "standard": "Demonstration rules only; not a clinical guideline", "version": "3.0.0-ENTERPRISE"}
 
 
 @app.get("/metrics")
