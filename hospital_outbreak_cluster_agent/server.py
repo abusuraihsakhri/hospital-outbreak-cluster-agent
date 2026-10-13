@@ -23,7 +23,7 @@ def create_app():
 
         app = FastAPI(
             title="OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent",
-            description="Real-time ward spatial-temporal clustering engine detecting HAI outbreaks (C. diff, MRSA, VRE, Candida auris) via EARS algorithms.",
+            description="Synthetic-record threshold demonstration. Does not implement EARS or NHSN outbreak detection.",
             version="2.0.0-PRO",
         )
 
