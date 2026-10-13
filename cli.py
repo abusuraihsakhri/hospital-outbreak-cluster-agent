@@ -12,6 +12,18 @@ from agents.base import AuditLogger
 supervisor = SystemSupervisor(model_provider="mock")
 
 
+def parse_boolean(value):
+    """Parse CSV booleans without treating the string 'False' as True."""
+    if isinstance(value, bool):
+        return value
+    normalized = str(value or "").strip().lower()
+    if normalized in {"true", "t", "yes", "y", "1"}:
+        return True
+    if normalized in {"false", "f", "no", "n", "0", ""}:
+        return False
+    raise ValueError("invalid boolean flag")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="hospital-outbreak-cluster-agent", description="Hospital Outbreak Cluster Agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -92,7 +104,7 @@ def main(argv=None):
             print(f"Error: Permission denied reading '{args.input}'.", file=sys.stderr)
             return 1
 
-        out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
+        out_fields = list(dict.fromkeys(fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]))
         out_rows = []
         for r in rows:
             try:
@@ -102,12 +114,18 @@ def main(argv=None):
                     primary_metric=float(r.get("primary_metric", 15.0)),
                     secondary_metric=float(r.get("secondary_metric", 5.0)),
                     status_descriptor=r.get("status_descriptor", "NOMINAL"),
-                    is_critical_flag=bool(r.get("is_critical_flag", False)),
+                    is_critical_flag=parse_boolean(r.get("is_critical_flag", False)),
                 )
+                dossier = supervisor.process_task(payload)
             except (ValueError, TypeError) as e:
-                print(f"Warning: Skipping malformed row {r}: {e}", file=sys.stderr)
+                print(f"Warning: Skipping malformed row (invalid value): {e}", file=sys.stderr)
                 continue
-            dossier = supervisor.process_task(payload)
+            except Exception as e:
+                from agents.base import SecurityException
+                if not isinstance(e, SecurityException):
+                    raise
+                print("Warning: Skipping row with prohibited identifier.", file=sys.stderr)
+                continue
             row_dict = dict(r)
             row_dict["overall_urgency"] = dossier.overall_urgency.value
             row_dict["integrity_status"] = dossier.integrity_status.value
