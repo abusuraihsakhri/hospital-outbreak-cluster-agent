@@ -178,7 +178,7 @@ class OutbreakCoordinator:
         if "summary" in q or "status" in q:
             return f"OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent currently tracking {len(self.case_registry)} cases in local air-gapped memory."
         elif "guidelines" in q or "protocol" in q:
-            return "This is an illustrative rules demonstration, not a validated clinical surveillance algorithm."
+            return "Guidelines: this is an illustrative rules demonstration, not a validated clinical surveillance algorithm."
         else:
             return f"OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent executive agent online. Continuous supervisory monitoring active across all domain parameters."
 
