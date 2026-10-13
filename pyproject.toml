@@ -3,25 +3,33 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hospital-outbreak-cluster-engine"
+name = "hospital-outbreak-cluster-agent"
 version = "2.0.0"
-description = "OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Engine"
+description = "Demonstration rules engine for synthetic hospital surveillance records"
 readme = "README.md"
-authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
+authors = [{ name = "Dr. Abu Suraih Sakhri" }] 
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 requires-python = ">=3.9"
-dependencies = []
+dependencies = ["pydantic>=2,<3"]
+
+[project.optional-dependencies]
+server = ["fastapi>=0.100,<1", "uvicorn>=0.23,<1"]
+test = ["pytest>=7,<10", "httpx>=0.25,<1"]
 
 [project.scripts]
 hospital-outbreak-cluster-engine = "hospital_outbreak_cluster_agent.cli:main"
+hospital-outbreak-cluster-agent = "cli:main"
 
 [project.urls]
 Homepage = "https://github.com/abusuraihsakhri/hospital-outbreak-cluster-engine"
-Repository = "https://github.com/abusuraihsakhri/hospital-outbreak-cluster-engine.git"
+Repository = "https://github.com/abusuraihsakhri/hospital-outbreak-cluster-agent.git"
+
+[tool.setuptools]
+packages = ["agents", "hospital_outbreak_cluster_agent"]
+py-modules = ["cli", "outbreak_pulse", "enrichment", "simulator", "hospital_outbreak_cluster_agent_app", "outbreak_pulse_app"]

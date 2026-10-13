@@ -69,12 +69,12 @@ def test_nan_infinity_validation():
     assert alerts_nan[0].origin_worker == "InputValidation"
     assert alerts_nan[0].urgency == UrgencyLevel.ELEVATED
 
-    # Infinity secondary metric - triggers both InputValidation and SafetyEscalationWorker
+    # Infinity secondary metric must not produce a false threshold alert
     p_inf = SystemTaskPayload(task_id="T-INF", target_identifier="KEY-INF", primary_metric=10.0, secondary_metric=float("inf"))
     alerts_inf = SafetyEscalationWorker.evaluate(p_inf)
-    assert len(alerts_inf) == 2
+    assert len(alerts_inf) == 1
     assert any(a.origin_worker == "InputValidation" for a in alerts_inf)
-    assert any(a.origin_worker == "SafetyEscalationWorker" for a in alerts_inf)
+    assert not any(a.origin_worker == "SafetyEscalationWorker" for a in alerts_inf)
 
 
 def test_supervisor_consensus_and_audit():

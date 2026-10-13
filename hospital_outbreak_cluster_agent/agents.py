@@ -93,7 +93,7 @@ class OutbreakCoordinator:
             "stat_critical_alerts": stat_count,
             "warning_alerts": warn_count,
             "alerts": [a.to_dict() for a in all_alerts],
-            "guideline_standard": "CDC NHSN Surveillance Guidelines",
+            "guideline_standard": "Illustrative demonstration rules; not clinical criteria",
             "consensus_summary": f"Multi-agent supervision completed across 3 sub-agents with status [{status.value}].",
         }
 
@@ -105,6 +105,6 @@ class OutbreakCoordinator:
         if "status" in q or "summary" in q:
             return f"OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent currently tracking {len(self.case_registry)} cases in on-premises memory."
         elif "guideline" in q or "standard" in q:
-            return "Active clinical surveillance operates under CDC NHSN Surveillance Guidelines validated protocols."
+            return "This is a synthetic demonstration and does not implement validated CDC NHSN surveillance."
         else:
             return f"OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent executive agent online. Zero-PHI air-gapped monitoring active."

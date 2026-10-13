@@ -1,6 +1,6 @@
 """
 Enrichment Feature Implementation for hospital-outbreak-cluster-agent.
-Generated based on domain-specific requirements in specifications.
+All named enrichment engines are generic threshold placeholders. They do not implement the scientific methods implied by their class names.
 """
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional
@@ -67,42 +67,42 @@ class ThresholdEngine:
 # CONCRETE ENGINE IMPLEMENTATIONS
 # =============================================================================
 class GenomicEpidemiologyTransmissionGraphBuilderEngine(ThresholdEngine):
-    """Construct minimum spanning trees from cgMLST/WGS data to confirm epidemiological linkage."""
+    """Placeholder; does not construct a cgMLST/WGS transmission graph."""
     feature_name = "Genomic Epidemiology Transmission Graph Builder"
 
 
 class RealtimeEars3AlgorithmImplementationEngine(ThresholdEngine):
-    """Implement CDC's Early Aberration Reporting System for ward-level daily surveillance."""
+    """Placeholder; does not compute CDC EARS statistics."""
     feature_name = "Real-Time EARS-3 Algorithm Implementation"
 
 
 class CandidaAurisContactTracingModuleEngine(ThresholdEngine):
-    """Dedicated sub-agent for C. auris outbreak management."""
+    """Placeholder; not a Candida auris contact tracing tool."""
     feature_name = "Candida auris Contact Tracing Module"
 
 
 class WardBedlayoutSpatialHeatmapEngine(ThresholdEngine):
-    """Render interactive ward floor plans with infection density overlays."""
+    """Placeholder; does not render ward floor plans or heatmaps."""
     feature_name = "Ward Bed-Layout Spatial Heatmap"
 
 
 class AutomatedNhsnReportingPipelineEngine(ThresholdEngine):
-    """Generate CDC NHSN HAI reports directly from cluster detection events."""
+    """Placeholder; does not generate NHSN reports."""
     feature_name = "Automated NHSN Reporting Pipeline"
 
 
 class HandHygieneComplianceCorrelationEngine(ThresholdEngine):
-    """Overlay hand hygiene data against outbreak timelines to assess contributing factors."""
+    """Placeholder; does not perform hand-hygiene correlation."""
     feature_name = "Hand Hygiene Compliance Correlation"
 
 
 class EnvironmentalContaminationSamplingAdvisorEngine(ThresholdEngine):
-    """Recommend targeted environmental sampling strategies when clusters are detected."""
+    """Placeholder; does not generate validated sampling strategies."""
     feature_name = "Environmental Contamination Sampling Advisor"
 
 
 class PostoutbreakDebriefAutomationEngine(ThresholdEngine):
-    """Auto-generate root-cause analysis documents after cluster resolution."""
+    """Placeholder; does not prepare root-cause reports."""
     feature_name = "Post-Outbreak Debrief Automation"
 
 

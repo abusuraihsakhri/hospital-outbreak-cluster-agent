@@ -1,7 +1,7 @@
 """
 Clinical Algorithmic Engine & Guideline Rules for OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent.
 Domain: Infection Control
-Standard: CDC NHSN Surveillance Guidelines
+Standard: Illustrative demonstration rules (not CDC NHSN criteria)
 """
 import math
 from typing import Dict, Any, List, Optional
@@ -9,7 +9,7 @@ from .models import ClinicalCasePayload, AgentAlert, UrgencyLevel, ClinicalInteg
 
 
 class ClinicalDomainEngine:
-    GUIDELINE = "CDC NHSN Surveillance Guidelines"
+    GUIDELINE = "Illustrative demonstration rules (not CDC NHSN criteria)"
     PRIMARY_BASELINE_LIMIT = 20.0
     SECONDARY_ALERT_LIMIT = 10.0
 
@@ -18,8 +18,8 @@ class ClinicalDomainEngine:
         if value > cls.PRIMARY_BASELINE_LIMIT:
             return {
                 "title": "Primary Metric Threshold Exceeded",
-                "finding": f"Observed value ({value:.2f}) exceeds CDC NHSN Surveillance Guidelines clinical baseline limit ({cls.PRIMARY_BASELINE_LIMIT:.1f}).",
-                "recommendation": "Perform immediate secondary verification and calibration review.",
+                "finding": f"Observed value ({value:.2f}) exceeds Illustrative demonstration rules (not CDC NHSN criteria) clinical baseline limit ({cls.PRIMARY_BASELINE_LIMIT:.1f}).",
+                "recommendation": "Review this synthetic record and its illustrative boundary.",
             }
         return None
 
@@ -29,7 +29,7 @@ class ClinicalDomainEngine:
             return {
                 "title": "STAT Kinetic Escalation Triggered",
                 "finding": f"Kinetic parameter ({value:.2f}) with STAT={is_stat} requires prioritized supervision.",
-                "recommendation": "Activate closed-loop verbal clinician notification protocol per Joint Commission standards.",
+                "recommendation": "Review the synthetic record and manual flag; no clinical notification is initiated.",
             }
         return None
 
@@ -40,6 +40,6 @@ class ClinicalDomainEngine:
             return {
                 "title": "Phenotypic / Biomarker Discordance Identified",
                 "finding": f"Status flag '{status_flag}' indicates divergence from standard diagnostic concordance.",
-                "recommendation": f"Order reflex confirmatory testing per CDC NHSN Surveillance Guidelines clinical recommendations.",
+                "recommendation": f"Review the synthetic status flag; no clinical testing is recommended.",
             }
         return None

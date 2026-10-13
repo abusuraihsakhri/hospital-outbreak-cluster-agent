@@ -1,7 +1,7 @@
 """
-Hospital Outbreak Cluster Agent — Enterprise Automated Analytical Suite.
+Hospital Outbreak Cluster Agent — synthetic rules demonstration.
 Domain: Antimicrobial Stewardship & Microbiology
-Standard: CLSI M100 / EUCAST / CDC NHSN Guidelines
+Standard: Illustrative rules only; not clinical guidance
 
 """
 __version__ = "3.0.0-ENTERPRISE"

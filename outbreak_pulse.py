@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent
-Real-time ward spatial-temporal clustering engine detecting HAI outbreaks (C. diff, MRSA, VRE, Candida auris) via EARS algorithms.
+Illustrative threshold and keyword checks on synthetic records; not an EARS or NHSN implementation.
 
 Domain: Infection Control
 Author: Dr. Abu Suraih Sakhri
@@ -13,8 +13,21 @@ import csv
 import datetime
 import json
 import sys
+import os
+import hmac
 import uuid
 from typing import Dict, Any, List, Optional
+
+
+def parse_boolean(value):
+    if isinstance(value, bool):
+        return value
+    text = str(value or "").strip().lower()
+    if text in {"true", "t", "yes", "y", "1"}:
+        return True
+    if text in {"false", "f", "no", "n", "0", ""}:
+        return False
+    raise ValueError("invalid boolean flag")
 
 
 class Severity(str):
@@ -32,15 +45,15 @@ class Severity(str):
 class DomainKnowledgeRegistry:
     """Enterprise domain rules, guideline matrices, and evidence benchmarks."""
     SYSTEM_VERSION = "2.0.0-PRO-CLINICAL"
-    ZERO_PHI_COMPLIANCE = True
-    HIPAA_SAFE_HARBOR = "ACTIVE_ON_PREMISES"
+    ZERO_PHI_COMPLIANCE = False
+    HIPAA_SAFE_HARBOR = "NOT_IMPLEMENTED"
 
     @staticmethod
     def audit_security_and_integrity(payload: Dict[str, Any]) -> List[str]:
         warnings = []
         for key in payload.keys():
             if any(phi_keyword in key.lower() for phi_keyword in ["patient_name", "ssn", "mrn_raw", "dob_raw"]):
-                warnings.append(f"PHI_DEFENSE_TRIGGERED: Direct identifier '{key}' masked to synthetic token.")
+                warnings.append(f"PHI_DEFENSE_TRIGGERED: Direct identifier '{key}' detected; no masking performed.")
         return warnings
 
 class AgentAlert:
@@ -88,7 +101,7 @@ class TemporalAberrationAgent:
     """Specialized Sub-Agent 2 for hospital-outbreak-cluster-agent"""
     def evaluate(self, payload: Dict[str, Any]) -> List[AgentAlert]:
         alerts = []
-        is_critical = bool(payload.get("critical_flag", False))
+        is_critical = parse_boolean(payload.get("critical_flag", False))
         val2 = float(payload.get("metric_secondary", 5.0))
         if is_critical or val2 > 12.0:
             alerts.append(
@@ -165,7 +178,7 @@ class OutbreakCoordinator:
         if "summary" in q or "status" in q:
             return f"OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent currently tracking {len(self.case_registry)} cases in local air-gapped memory."
         elif "guidelines" in q or "protocol" in q:
-            return "All sub-agents operate under validated consensus clinical algorithms and CAP/CLSI/NCCN/WHO standards."
+            return "Guidelines: this is an illustrative rules demonstration, not a validated clinical surveillance algorithm."
         else:
             return f"OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent executive agent online. Continuous supervisory monitoring active across all domain parameters."
 
@@ -175,12 +188,19 @@ coordinator = OutbreakCoordinator()
 
 def create_app():
     try:
-        from fastapi import FastAPI
+        from fastapi import FastAPI, Header, HTTPException, Depends
         from pydantic import BaseModel
+
+        def require_api_token(x_api_key: str = Header(default="")):
+            configured = os.getenv("API_ACCESS_TOKEN", "")
+            if not configured:
+                raise HTTPException(status_code=503, detail="API_ACCESS_TOKEN is not configured")
+            if not hmac.compare_digest(x_api_key, configured):
+                raise HTTPException(status_code=401, detail="Invalid API key")
 
         app = FastAPI(
             title="OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent",
-            description="Real-time ward spatial-temporal clustering engine detecting HAI outbreaks (C. diff, MRSA, VRE, Candida auris) via EARS algorithms.",
+            description="Synthetic task demonstration; no validated outbreak classification is performed.",
             version="1.0.0",
         )
 
@@ -198,11 +218,11 @@ def create_app():
         def health():
             return {"status": "HEALTHY", "system": "hospital-outbreak-cluster-agent", "version": "1.0.0"}
 
-        @app.post("/api/audit")
+        @app.post("/api/audit", dependencies=[Depends(require_api_token)])
         def api_audit(req: AuditRequest):
             return coordinator.audit_case(req.model_dump())
 
-        @app.post("/api/chat")
+        @app.post("/api/chat", dependencies=[Depends(require_api_token)])
         def api_chat(req: ChatRequest):
             return {"response": coordinator.query_assistant(req.query)}
 
@@ -281,7 +301,11 @@ def main(argv=None):
         out_fields = fieldnames + ["overall_status", "total_alerts", "critical_count", "consensus_summary"]
         out_rows = []
         for r in rows:
-            dossier = coordinator.audit_case(dict(r))
+            try:
+                dossier = coordinator.audit_case(dict(r))
+            except (ValueError, TypeError):
+                print("Warning: Skipping row with invalid measurements or flags.", file=sys.stderr)
+                continue
             row_dict = dict(r)
             row_dict["overall_status"] = dossier["overall_status"]
             row_dict["total_alerts"] = dossier["total_alerts"]
