@@ -1,5 +1,5 @@
 """
-Inference Engine supporting local Ollama, Claude, OpenAI, and deterministic Mock with Zero-PHI checks.
+Deterministic mock responder with best-effort identifier screening. Other providers are unsupported.
 """
 from .base import PHIGuard
 
