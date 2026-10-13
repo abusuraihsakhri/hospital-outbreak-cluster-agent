@@ -29,3 +29,7 @@ hospital-outbreak-cluster-agent = "cli:main"
 [project.urls]
 Homepage = "https://github.com/abusuraihsakhri/hospital-outbreak-cluster-engine"
 Repository = "https://github.com/abusuraihsakhri/hospital-outbreak-cluster-agent.git"
+
+[tool.setuptools]
+packages = ["agents", "hospital_outbreak_cluster_agent"]
+py-modules = ["cli", "outbreak_pulse", "enrichment", "simulator", "hospital_outbreak_cluster_agent_app", "outbreak_pulse_app"]
