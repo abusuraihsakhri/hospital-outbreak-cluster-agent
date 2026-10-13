@@ -1,175 +1,66 @@
 # Hospital Outbreak Cluster Agent
 
-> **Domain:** Infectious Disease Surveillance & Microbiology
-> **Reference Guidelines & Standards:** `CLSI M100, EUCAST & CDC NHSN Clinical Standards`
+A Python rules-engine demonstration and a static browser interface for **synthetic** hospital surveillance records. The supported agent evaluation lives in the agents/ directory, with its CLI in cli.py.
 
-<div align="center">
+**Scope:** The hard-coded numeric boundaries (primary > 25; secondary > 12), manual critical flag, and descriptor keyword checks are illustrative. They are **not** CDC NHSN outbreak detection criteria, validated EARS calculations, genomic transmission inference, or clinical recommendations. Do not enter real patient data or use outputs for clinical decisions.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+## Browser demonstration
 
-</div>
+The static interface in [web/](web/) runs entirely in the browser using JavaScript rules corresponding to the three Python workers. It needs no API, Pyodide, or runtime server and can be hosted on GitHub Pages. Open web/index.html directly, or serve the directory locally:
 
----
+    python -m http.server 8080 --directory web
 
-## 📖 What It Does
+The interface accepts synthetic IDs and two metrics, displays triggered rules, and exports a local JSON summary. Nothing is sent to the application server by this interface. Its basic identifier check is **not** de-identification or an assurance of HIPAA compliance.
 
-**Hospital Outbreak Cluster Agent** is an advanced analytical and computational platform implementing Spatial-Temporal Nosocomial Outbreak & Transmission Tracker. It detects healthcare-associated infection (HAI) outbreaks including C. diff, MRSA, VRE, and Candida auris using EARS algorithms and multi-agent consensus.
+## Python installation and usage
 
----
+Python 3.10–3.12 is exercised in CI; the declared minimum is Python 3.9.
 
-## ⚙️ Key Capabilities & Algorithmic Modules
+    python -m pip install -e ".[server,test]"
+    python cli.py audit --task-id SYNTH-001 --target SYNTH-01 --primary 27 --secondary 13
+    python cli.py batch -i sample.csv -o results.csv
+    python cli.py verify-audit
+    python -m pytest -q
+    node --test web/test_engine.cjs
 
-### 🔬 Core Algorithmic & Evaluation Engines
+CSV inputs for the root CLI use task_id, target_identifier, primary_metric, secondary_metric, status_descriptor, and is_critical_flag (accepted: true/false, 1/0, yes/no). Invalid rows are skipped with a warning.
 
-- **`Severity`** — dedicated module for severity evaluation and state verification.
-- **`DomainKnowledgeRegistry`**: Enterprise domain rules, guideline matrices, and evidence benchmarks.
-- **`AgentAlert`** — dedicated module for agent alert evaluation and state verification.
-- **`SpatialWardClusterAgent`**: Specialized Sub-Agent 1 for hospital-outbreak-cluster-agent
-- **`TemporalAberrationAgent`**: Specialized Sub-Agent 2 for hospital-outbreak-cluster-agent
-- **`GenomicTransmissionMatcherAgent`**: Specialized Sub-Agent 3 for hospital-outbreak-cluster-agent
+## REST API
 
-### 🛡️ Enrichment Modules
+    export AUDIT_SECRET_KEY="replace-with-a-random-secret-at-least-32-bytes"
+    export API_ACCESS_TOKEN="replace-with-an-independent-long-random-token"
+    python cli.py serve --host 127.0.0.1 --port 8000
 
-- **Genomic Epidemiology Transmission Graph Builder** — cgMLST/WGS linkage analysis
-- **Real-Time EARS-3 Algorithm** — CDC Early Aberration Reporting System
-- **Candida Auris Contact Tracing Module** — Dedicated outbreak management
-- **Ward Bed-Layout Spatial Heatmap** — Infection density visualization
-- **Automated NHSN Reporting Pipeline** — CDC NHSN HAI report generation
-- **Hand Hygiene Compliance Correlation** — Contributing factor analysis
-- **Environmental Contamination Sampling Advisor** — Targeted sampling strategies
-- **Post-Outbreak Debrief Automation** — Root-cause analysis generation
+    curl -H "X-API-Key: $API_ACCESS_TOKEN" -H "Content-Type: application/json" \
+      -d '{"task_id":"SYNTH-001","target_identifier":"SYNTH-01","primary_metric":27,"secondary_metric":13}' \
+      http://127.0.0.1:8000/api/audit
 
----
+GET /health and GET /metrics are available without a token; POST /api/audit, POST /api/chat, and GET /api/audit/logs require the X-API-Key token. Protected routes return 503 if no token is configured. Run only behind appropriate network controls; rate limiting, persistence, and regulated-data compliance are not provided.
 
-## 💻 Installation
+## Security and data handling
 
-```bash
-# Clone the repository
-git clone https://github.com/abusuraihsakhri/hospital-outbreak-cluster-agent.git
-cd hospital-outbreak-cluster-agent
+- An HMAC-SHA256 in-memory audit ledger signs events and validates both signatures and chain linkage. **This is not durable storage**: entries are lost when the process stops, as is the automatically generated development key.
+- The regular-expression identifier guard blocks common formats only and is not comprehensive PHI detection. No actual health records should be submitted.
+- The model factory implements a deterministic mock only. Requests for other providers fail explicitly.
+- The browser demonstration does not load external JavaScript, use browser storage, or contact the API; its downloadable JSON file remains on the device unless shared.
+- Docker Compose binds to loopback and requires AUDIT_SECRET_KEY and API_ACCESS_TOKEN from the environment. Do not commit production keys.
 
-# Install dependencies
-pip install pydantic pytest fastapi uvicorn
-```
+## Container
 
----
+    export AUDIT_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+    export API_ACCESS_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+    docker compose up --build
 
-## 💻 CLI Quickstart & Usage
+## Project layout
 
-### 1. Guided Interactive Mode
-```bash
-python cli.py
-```
+- agents/ — Pydantic schemas, rule workers, supervisor, in-memory audit, mock interface, REST API.
+- cli.py — root CLI and CSV processor.
+- web/ — static browser demonstration and Node regression tests.
+- hospital_outbreak_cluster_agent/ and outbreak_pulse.py — separate older example implementations retained for compatibility.
+- enrichment.py — generic threshold-engine placeholders; their names do **not** imply the named scientific algorithms are implemented.
+- tests/, test_outbreak_pulse.py — Python regression tests.
+- .github/workflows/ — CI and browser publication configuration.
 
-### 2. Direct Parameterized Evaluation
-```bash
-python cli.py audit --task-id <value> --target <value> --primary <value> --secondary <value>
-```
+## License
 
-### Parameter Reference
-- `--task-id`: Unique task / case identifier
-- `--target`: Entity, patient key, or genomic target
-- `--primary`: Primary domain measurement or score (float)
-- `--secondary`: Secondary kinetic or confidence score (float)
-- `--critical`: Emergency escalation flag
-- `--status`: Status code or phenotype descriptor
-
-### Batch Processing
-```bash
-# Process CSV file
-python cli.py batch -i sample.csv -o results.csv
-```
-
-### Audit Verification
-```bash
-# Verify HMAC audit trail integrity
-python cli.py verify-audit
-```
-
----
-
-## 🌐 REST API Server
-
-```bash
-# Launch FastAPI server
-python cli.py serve --host 127.0.0.1 --port 8000
-```
-
-### API Endpoints
-
-| Endpoint | Method | Description |
-|:---------|:-------|:------------|
-| `/health` | GET | Service health check |
-| `/metrics` | GET | Prometheus-compatible metrics |
-| `/api/audit` | POST | Submit evaluation task |
-| `/api/chat` | POST | Query supervisory assistant |
-| `/api/audit/logs` | GET | Retrieve audit trail |
-
----
-
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active regex inspection blocking SSNs, MRNs, phone numbers, emails, and patient identifiers. All violations are logged to the tamper-evident audit trail.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition. **Set `AUDIT_SECRET_KEY` environment variable in production.**
-* **Input Validation:** Automatic detection of non-finite numeric values (NaN, Infinity) in all metric inputs.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
-
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
-
-```bash
-pytest -v
-```
-
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py 1000
-```
-
----
-
-## 🐳 Container Deployment
-
-```bash
-docker build -t hospital-outbreak-cluster-agent .
-docker run -p 8000:8000 hospital-outbreak-cluster-agent
-```
-
----
-
-## 📁 Project Structure
-
-```
-hospital-outbreak-cluster-agent/
-├── agents/                          # Core multi-agent system
-│   ├── api.py                       # FastAPI REST endpoints
-│   ├── base.py                      # Security, PHI guard, audit trail
-│   ├── llm_factory.py              # LLM provider abstraction
-│   ├── metrics.py                   # Prometheus metrics collector
-│   ├── models.py                    # Pydantic data models
-│   ├── streamer.py                  # WebSocket telemetry
-│   ├── supervisor.py                # Master orchestrator
-│   ├── workers.py                   # Domain worker agents
-│   └── learning.py                  # Bayesian calibration engine
-├── tests/                           # Test suite
-│   ├── test_hospital_outbreak_cluster_agent.py
-│   └── test_enrichment.py
-├── hospital_outbreak_cluster_agent/ # Package distribution module
-├── cli.py                           # Main CLI entry point
-├── simulator.py                     # High-throughput simulation
-├── enrichment.py                    # Domain enrichment engines
-├── outbreak_pulse.py               # Spatial-temporal clustering
-├── pyproject.toml                   # Project configuration
-└── Dockerfile                       # Container definition
-```
+MIT; see [LICENSE](LICENSE).
