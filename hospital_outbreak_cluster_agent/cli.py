@@ -11,6 +11,17 @@ from .agents import OutbreakCoordinator
 coordinator = OutbreakCoordinator()
 
 
+def parse_boolean(value):
+    if isinstance(value, bool):
+        return value
+    text = str(value or "").strip().lower()
+    if text in {"true", "t", "yes", "y", "1"}:
+        return True
+    if text in {"false", "f", "no", "n", "0", ""}:
+        return False
+    raise ValueError("invalid boolean flag")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="hospital-outbreak-cluster-agent", description="OutbreakPulse: Autonomous Nosocomial Cluster Detection & Spatial Transmission Agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -82,7 +93,7 @@ def main(argv=None):
                 primary_metric=float(r.get("metric_primary", r.get("primary_metric", 15.0))),
                 secondary_metric=float(r.get("metric_secondary", r.get("secondary_metric", 5.0))),
                 status_flag=r.get("status_flag", r.get("status_text", "NORMAL")),
-                is_stat=bool(r.get("is_stat", r.get("critical_flag", False))),
+                is_stat=parse_boolean(r.get("is_stat", r.get("critical_flag", False))),
             )
             dossier = coordinator.process_case(case)
             row_dict = dict(r)
